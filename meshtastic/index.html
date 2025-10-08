@@ -103,7 +103,7 @@
     <div id="map"></div>
     
     <div class="control-panel">
-        <h3>📡 LoRa Mesh Control</h3>
+        <h3>LoRa Mesh Control</h3>
         <button id="addNodeBtn">Add Node</button>
         <button id="broadcastBtn">Send Broadcast</button>
         <button id="resetBtn">Reset Network</button>
@@ -133,24 +133,21 @@
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
             crossorigin=""></script>
     <script>
-        // Wait for page to fully load
         window.onload = function() {
             // Initialize map
             var map = L.map('map').setView([34.0522, -118.2437], 12);
 
-            // Add OpenStreetMap tiles
+            // OpenStreetMap tiles
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
                 maxZoom: 19
             }).addTo(map);
 
-            // Global state
             var nodes = [];
             var LORA_RANGE = 5000; // 5km in meters
             var messageCount = 0;
             var messageIdCounter = 0; // Unique message ID generator
 
-            // Create custom marker icon
             function createMarkerIcon(nodeId, color) {
                 return L.divIcon({
                     className: 'custom-marker',
@@ -172,7 +169,6 @@
                 return R * c;
             }
 
-            // Find nodes within range
             function findNodesInRange(sourceNode) {
                 var nodesInRange = [];
                 for (var i = 0; i < nodes.length; i++) {
@@ -189,12 +185,10 @@
                 return nodesInRange;
             }
 
-            // Update marker color
             function updateNodeColor(node, color) {
                 node.marker.setIcon(createMarkerIcon(node.id, color));
             }
 
-            // Draw animated line between nodes
             function drawMessageLine(fromNode, toNode) {
                 var line = L.polyline([
                     [fromNode.lat, fromNode.lng],
@@ -210,9 +204,7 @@
                 }, 1500);
             }
 
-            // Simulate message propagation
             function propagateMessage(currentNode, visitedIds, messageId) {
-                // Mark this message as received by this node
                 if (currentNode.receivedMessages.indexOf(messageId) === -1) {
                     currentNode.receivedMessages.push(messageId);
                 }
@@ -222,11 +214,8 @@
                 setTimeout(function() {
                     var nearbyNodes = findNodesInRange(currentNode);
                     var unvisitedNodes = [];
-                    
                     for (var i = 0; i < nearbyNodes.length; i++) {
-                        // Check if node has already received this specific message
                         var alreadyReceived = nearbyNodes[i].receivedMessages.indexOf(messageId) !== -1;
-                        
                         if (!alreadyReceived) {
                             unvisitedNodes.push(nearbyNodes[i]);
                         }
@@ -244,7 +233,6 @@
                             setTimeout(function() {
                                 drawMessageLine(currentNode, nextNode);
                                 updateNodeColor(nextNode, '#f59e0b');
-                                
                                 setTimeout(function() {
                                     propagateMessage(nextNode, visitedIds, messageId);
                                 }, 300);
@@ -258,16 +246,13 @@
                 }, 500);
             }
 
-            // Add a new node
             function addNode() {
                 var center = map.getCenter();
                 var bounds = map.getBounds();
                 var latSpread = (bounds.getNorth() - bounds.getSouth()) / 4;
                 var lngSpread = (bounds.getEast() - bounds.getWest()) / 4;
-                
                 var lat = center.lat + (Math.random() - 0.5) * latSpread;
                 var lng = center.lng + (Math.random() - 0.5) * lngSpread;
-                
                 var nodeId = nodes.length + 1;
                 var node = {
                     id: nodeId,
@@ -278,12 +263,11 @@
                     receivedMessages: [] // Track message IDs this node has seen
                 };
 
-                // Create marker
                 node.marker = L.marker([lat, lng], {
                     icon: createMarkerIcon(nodeId, '#10b981')
                 }).addTo(map);
 
-                // Create range circle
+                // Range circle
                 node.circle = L.circle([lat, lng], {
                     radius: LORA_RANGE,
                     color: '#3b82f6',
@@ -293,7 +277,6 @@
                     dashArray: '5, 5'
                 }).addTo(map);
 
-                // Add popup
                 node.marker.bindPopup(
                     '<strong>Node #' + nodeId + '</strong><br>' +
                     'Lat: ' + lat.toFixed(4) + '<br>' +
@@ -301,7 +284,6 @@
                     'Range: 5km'
                 );
 
-                // Click handler
                 node.marker.on('click', function() {
                     var nearbyNodes = findNodesInRange(node);
                     if (nearbyNodes.length === 0) {
@@ -309,7 +291,7 @@
                         return;
                     }
                     messageCount++;
-                    messageIdCounter++; // Generate unique message ID
+                    messageIdCounter++;
                     updateStats();
                     propagateMessage(node, [node.id], messageIdCounter);
                 });
@@ -318,7 +300,6 @@
                 updateStats();
             }
 
-            // Send broadcast from random node
             function sendBroadcast() {
                 if (nodes.length === 0) {
                     alert('Add some nodes first!');
@@ -331,7 +312,6 @@
                 propagateMessage(randomNode, [randomNode.id], messageIdCounter);
             }
 
-            // Reset network
             function resetNetwork() {
                 for (var i = 0; i < nodes.length; i++) {
                     map.removeLayer(nodes[i].marker);
@@ -342,18 +322,15 @@
                 updateStats();
             }
 
-            // Update statistics
             function updateStats() {
                 document.getElementById('nodeCount').textContent = nodes.length;
                 document.getElementById('msgCount').textContent = messageCount;
             }
 
-            // Button event listeners
             document.getElementById('addNodeBtn').addEventListener('click', addNode);
             document.getElementById('broadcastBtn').addEventListener('click', sendBroadcast);
             document.getElementById('resetBtn').addEventListener('click', resetNetwork);
 
-            // Initialize with 5 nodes
             for (var i = 0; i < 5; i++) {
                 setTimeout(addNode, i * 100);
             }
