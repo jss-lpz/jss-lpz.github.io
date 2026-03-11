@@ -2,7 +2,7 @@ class VideoMirror {
             constructor() {
                 this.video = document.getElementById('videoElement');
                 this.canvas = document.getElementById('canvas');
-                this.ctx = this.canvas.getContext('2d');
+                this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
                 this.status = document.getElementById('status');
                 this.stream = null;
                 this.animationId = null;
